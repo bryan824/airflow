@@ -24,7 +24,7 @@ from typing import Any, Dict, Iterable, Tuple
 
 import pendulum
 from dateutil import relativedelta
-from sqlalchemy import event, nullsfirst, tuple_
+from sqlalchemy import event, false, nullsfirst, tuple_
 from sqlalchemy.exc import OperationalError
 from sqlalchemy.orm.session import Session
 from sqlalchemy.sql import ColumnElement
@@ -339,4 +339,7 @@ def tuple_in_condition(
     """
     if settings.engine.dialect.name != "mssql":
         return tuple_(*columns).in_(collection)
-    return or_(*(and_(*(c == v for c, v in zip(columns, values))) for values in collection))
+    clauses = [and_(*(c == v for c, v in zip(columns, values))) for values in collection]
+    if not clauses:
+        return false()
+    return or_(*clauses)
